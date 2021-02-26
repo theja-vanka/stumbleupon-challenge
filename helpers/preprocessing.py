@@ -48,33 +48,49 @@ def avgwordvec(model, corpus):
     return avg_vectors
 
 
-def createvector():
-    df = pd.read_csv('./data/train.tsv', delimiter='\t')
+def createvector(section='train'):
+    df = pd.read_csv(f'./data/{section}.tsv', delimiter='\t')
     w2v_model = loadglove()
 
     preprocessed_corpus = processcorpus(df['boilerplate'].values)
     vectors = avgwordvec(w2v_model, preprocessed_corpus)
 
-    pickle.dump(vectors, open("experiments/avgwv.pkl", "wb"))
+    pickle.dump(vectors, open(f"experiments/avgwv_{section}.pkl", "wb"))
 
 
-def main():
-    # createvector()
+def train_vectors():
+    # createvector('train')
     df = pd.read_csv('./data/train.tsv', delimiter='\t')
-    df['alchemy_category'] = df['alchemy_category'].astype('category')
-    df['alchemy_category'] = df['alchemy_category'].cat.codes
-    df = pd.get_dummies(df, columns=["alchemy_category"])
     y_vector = df[['label']].to_numpy()
-    df = df.drop(['url', 'urlid', 'boilerplate', 'label'], axis=1)
+    df = df.drop(['url', 'urlid', 'boilerplate', 'label', 'alchemy_category'], axis=1)
     df = df.replace("?", 0)
     for col in df.columns:
         df[col] = df[col].astype(float)
 
     df = df.to_numpy()
-    vectors = np.array(pickle.load(open("experiments/avgwv.pkl", "rb")))
+    vectors = np.array(pickle.load(open("experiments/avgwv_train.pkl", "rb")))
     final_vector = np.concatenate((df, vectors), axis=1)
     final_vector = np.concatenate((final_vector, y_vector), axis=1)
     pickle.dump(final_vector, open("experiments/dataset.pkl", "wb"))
+
+
+def test_vectors():
+    # createvector('test')
+    df = pd.read_csv('./data/test.tsv', delimiter='\t')
+    df = df.drop(['url', 'boilerplate', 'alchemy_category'], axis=1)
+    df = df.replace("?", 0)
+    for col in df.columns:
+        df[col] = df[col].astype(float)
+
+    df = df.to_numpy()
+    vectors = np.array(pickle.load(open("experiments/avgwv_test.pkl", "rb")))
+    final_vector = np.concatenate((df, vectors), axis=1)
+    pickle.dump(final_vector, open("experiments/test.pkl", "wb"))
+
+
+def main():
+    # train_vectors()
+    test_vectors()
 
 
 if __name__ == '__main__':

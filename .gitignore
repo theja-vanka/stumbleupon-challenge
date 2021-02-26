@@ -1,4 +1,6 @@
 data/
 experiments/dataset.pkl
-experiments/avgwv.pkl
+experiments/avgwv_train.pkl
+experiments/avgwv_test.pkl
 experiments/weights/weights*
+experiments/test.pkl
