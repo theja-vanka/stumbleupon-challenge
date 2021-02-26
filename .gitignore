@@ -1,3 +1,4 @@
 data/
 experiments/dataset.pkl
 experiments/avgwv.pkl
+experiments/weights/weights*
