@@ -71,10 +71,10 @@ def main():
         df[col] = df[col].astype(float)
 
     df = df.to_numpy()
-    vectors = pickle.load(open("experiments/avgwv.pkl", "rb"))
+    vectors = np.array(pickle.load(open("experiments/avgwv.pkl", "rb")))
     final_vector = np.concatenate((df, vectors), axis=1)
     final_vector = np.concatenate((final_vector, y_vector), axis=1)
-    pickle.dump(vectors, open("experiments/dataset.pkl", "wb"))
+    pickle.dump(final_vector, open("experiments/dataset.pkl", "wb"))
 
 
 if __name__ == '__main__':

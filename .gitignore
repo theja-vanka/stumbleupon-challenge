@@ -1,2 +1,3 @@
 data/
-experiments/*.pkl
+experiments/dataset.pkl
+experiments/avgwv.pkl
