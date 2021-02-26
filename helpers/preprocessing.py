@@ -3,6 +3,7 @@ import pandas as pd
 import json
 import numpy as np
 import pickle
+from tqdm import tqdm
 
 
 def loadglove():
@@ -18,16 +19,22 @@ def loadglove():
 
 def processcorpus(series):
     preprocessed_corpus = []
-    for obj in series:
+    for obj in tqdm(series):
         res = json.loads(obj)
-        _ = res['title'] + res['body'] + res['url']
+        _ = ""
+        if 'title' in res.keys() and res['title'] is not None:
+            _ += str(res['title'])
+        if 'body' in res.keys() and res['body'] is not None:
+            _ += str(res['body'])
+        if 'url' in res.keys() and res['url'] is not None:
+            _ += res['url']
         preprocessed_corpus.append(_.split())
     return preprocessed_corpus
 
 
 def avgwordvec(model, corpus):
     avg_vectors = []
-    for corpus in corpus:
+    for corpus in tqdm(corpus):
         sent_vec = np.zeros(300)
         cnt_words = 0
         for word in corpus:
@@ -38,9 +45,10 @@ def avgwordvec(model, corpus):
         if cnt_words != 0:
             sent_vec /= cnt_words
         avg_vectors.append(sent_vec)
+    return avg_vectors
 
 
-def main():
+def createvector():
     df = pd.read_csv('./data/train.tsv', delimiter='\t')
     w2v_model = loadglove()
 
@@ -48,6 +56,25 @@ def main():
     vectors = avgwordvec(w2v_model, preprocessed_corpus)
 
     pickle.dump(vectors, open("experiments/avgwv.pkl", "wb"))
+
+
+def main():
+    # createvector()
+    df = pd.read_csv('./data/train.tsv', delimiter='\t')
+    df['alchemy_category'] = df['alchemy_category'].astype('category')
+    df['alchemy_category'] = df['alchemy_category'].cat.codes
+    df = pd.get_dummies(df, columns=["alchemy_category"])
+    y_vector = df[['label']].to_numpy()
+    df = df.drop(['url', 'urlid', 'boilerplate', 'label'], axis=1)
+    df = df.replace("?", 0)
+    for col in df.columns:
+        df[col] = df[col].astype(float)
+
+    df = df.to_numpy()
+    vectors = pickle.load(open("experiments/avgwv.pkl", "rb"))
+    final_vector = np.concatenate((df, vectors), axis=1)
+    final_vector = np.concatenate((final_vector, y_vector), axis=1)
+    pickle.dump(vectors, open("experiments/dataset.pkl", "wb"))
 
 
 if __name__ == '__main__':
